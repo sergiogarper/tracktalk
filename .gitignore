@@ -1,0 +1,32 @@
+# ─── GLOBAL ─────────────────────────
+.DS_Store
+*.log
+*.tmp
+
+# ─── FLUTTER ────────────────────────
+/Flutter/.dart_tool/
+/Flutter/.packages
+/Flutter/.flutter-plugins
+/Flutter/.flutter-plugins-dependencies
+/Flutter/.idea/
+/Flutter/.vscode/
+/Flutter/build/
+/Flutter/ios/Pods/
+/Flutter/ios/.symlinks/
+/Flutter/ios/Flutter/Flutter.framework
+/Flutter/ios/Flutter/Flutter.podspec
+/Flutter/pubspec.lock
+/Flutter/android/.gradle/
+/Flutter/android/local.properties
+/Flutter/coverage/
+**/generated_plugin_registrant.dart
+
+# ─── NODE.JS BACKEND ────────────────
+/Backend/node_modules/
+/Backend/.env
+/Backend/.DS_Store
+/Backend/package-lock.json
+
+# ─── OTRAS RUTAS ─────────────────────
+.idea/
+.vscode/
