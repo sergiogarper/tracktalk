@@ -2,13 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:tracktalk/shared/widgets/custom_bottom_navbar.dart';
 
-class HomeScreen extends StatelessWidget {
-  final String userName;
+import 'package:tracktalk/shared/models/usuario_global.dart';
 
-  const HomeScreen({
-    super.key,
-    this.userName = 'usuario',
-  });
+class HomeScreen extends StatelessWidget {
+  const HomeScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -46,6 +43,7 @@ class HomeScreen extends StatelessWidget {
       },
     ];
 
+    final String userName = UsuarioGlobal.nombre ?? 'usuario';
     final String avatarUrl =
         'https://robohash.org/$userName/?set=set5&size=200x200';
 

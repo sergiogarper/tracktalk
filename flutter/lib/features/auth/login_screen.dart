@@ -90,7 +90,9 @@ class _LoginScreenState extends State<LoginScreen>
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: () {},
+                    onPressed: () {
+                      context.go('/login-form');
+                    },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF2E4E45),
                       foregroundColor: Colors.white,
@@ -112,7 +114,9 @@ class _LoginScreenState extends State<LoginScreen>
                 SizedBox(
                   width: double.infinity,
                   child: TextButton(
-                    onPressed: () {},
+                    onPressed: () {
+                      context.go('/register');
+                    },
                     style: TextButton.styleFrom(
                       backgroundColor: const Color.fromRGBO(231, 236, 221, 1),
                       foregroundColor: const Color(0xFF2E4E45),
