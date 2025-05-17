@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:tracktalk/shared/widgets/custom_bottom_navbar.dart';
-
+import 'package:go_router/go_router.dart';
 import 'package:tracktalk/shared/memory/chat_memory.dart';
+import 'package:tracktalk/shared/models/cancion_model.dart';
+import 'package:tracktalk/shared/services/chat_service.dart';
+import 'package:tracktalk/shared/widgets/custom_bottom_navbar.dart';
+import 'package:tracktalk/shared/models/usuario_global.dart';
+import 'package:tracktalk/shared/models/respuesta_chat.dart';
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key});
@@ -13,6 +17,10 @@ class ChatScreen extends StatefulWidget {
 class _ChatScreenState extends State<ChatScreen> {
   final ScrollController _scrollController = ScrollController();
   final TextEditingController _controller = TextEditingController();
+  final ChatService chatService = ChatService();
+
+  int? _chatId;
+  List<Cancion> _recomendaciones = [];
 
   void _scrollToBottom() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -26,46 +34,52 @@ class _ChatScreenState extends State<ChatScreen> {
     });
   }
 
-  void _handleSendMessage() {
-    if (_controller.text.trim().isEmpty) return;
+  void _handleSendMessage() async {
+    if (_controller.text.trim().isEmpty || UsuarioGlobal.id == null) return;
+
     final userMessage = _controller.text.trim();
     setState(() {
-      ChatMemory().addMessage({
-        'text': userMessage,
-        'isUser': true,
-      });
+      ChatMemory().addMessage({'text': userMessage, 'isUser': true});
+      _controller.clear();
+      _recomendaciones = [];
     });
-    _controller.clear();
 
     _scrollToBottom();
 
-    // SIMULACION TEMPORAL DEL BOT
-    Future.delayed(const Duration(milliseconds: 1000), () {
+    try {
+      final RespuestaChat respuesta = await chatService.enviarMensaje(
+        usuarioId: UsuarioGlobal.id!,
+        mensajeUsuario: userMessage,
+        chatId: _chatId,
+      );
+
+      setState(() {
+        ChatMemory().addMessage({'text': respuesta.mensajeIA, 'isUser': false});
+        _recomendaciones = respuesta.canciones;
+        _chatId ??= respuesta.chatId;
+      });
+    } catch (e) {
       setState(() {
         ChatMemory().addMessage({
-          'text':
-              '🎶 ¡Por supuesto! Aquí tienes algunas recomendaciones musicales: \n\n1. "Sinfonía de la Aurora"\n2. "Ecos del Tiempo"\n3. "Melodías del Horizonte"\n4. "Armonía Celestial"\n5. "Ritmos del Universo"',
+          'text': '⚠️ Hubo un error al procesar tu mensaje.',
           'isUser': false,
         });
       });
-      _scrollToBottom();
-    });
+    }
+
+    _scrollToBottom();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      bottomNavigationBar: const CustomBottomNavBar(
-        currentIndex: 1,
-      ),
+      bottomNavigationBar: const CustomBottomNavBar(currentIndex: 1),
       body: Stack(
         children: [
           Positioned.fill(
             child: Stack(
               children: [
-                Container(
-                  color: const Color(0xFFFAF8F6),
-                ),
+                Container(color: const Color(0xFFFAF8F6)),
                 Positioned.fill(
                   child: Opacity(
                     opacity: 0.6,
@@ -83,26 +97,20 @@ class _ChatScreenState extends State<ChatScreen> {
               children: [
                 Padding(
                   padding: const EdgeInsets.only(
-                      left: 10.0, right: 20.0, top: 10.0, bottom: 10.0),
+                      left: 10, right: 20, top: 10, bottom: 10),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Image.asset(
-                            'assets/images/icon.png',
-                            height: 100,
+                      Row(children: [
+                        Image.asset('assets/images/icon.png', height: 100),
+                        const Text(
+                          'Chat',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 54,
                           ),
-                          const Text(
-                            'Chat',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 54,
-                            ),
-                          ),
-                        ],
-                      ),
+                        ),
+                      ]),
                       IconButton(
                         icon: const Icon(Icons.menu, size: 42),
                         onPressed: () {
@@ -127,12 +135,13 @@ class _ChatScreenState extends State<ChatScreen> {
                                     onTap: () {
                                       setState(() {
                                         ChatMemory().clearMessages();
+                                        _recomendaciones.clear();
+                                        _chatId = null;
                                       });
                                       Navigator.of(context).pop();
                                     },
                                   ),
                                   ListTile(
-                                    // SIN FUNCIONALIDAD AUN
                                     leading: const Icon(Icons.history),
                                     title: const Text('Historial de chats'),
                                     onTap: () {
@@ -151,22 +160,55 @@ class _ChatScreenState extends State<ChatScreen> {
                 Expanded(
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                    child: ListView.builder(
+                    child: ListView(
                       controller: _scrollController,
-                      itemCount: ChatMemory().messages.length,
-                      itemBuilder: (context, index) {
-                        final msg = ChatMemory().messages[index];
-                        return Align(
-                          alignment: msg['isUser']
-                              ? Alignment.centerRight
-                              : Alignment.centerLeft,
-                          child: ChatBubble(
-                            message: msg['text'],
-                            isUser: msg['isUser'],
-                            timestamp: DateTime.now(),
-                          ),
-                        );
-                      },
+                      children: [
+                        ...ChatMemory().messages.map((msg) => Align(
+                              alignment: msg['isUser']
+                                  ? Alignment.centerRight
+                                  : Alignment.centerLeft,
+                              child: ChatBubble(
+                                message: msg['text'],
+                                isUser: msg['isUser'],
+                                timestamp: DateTime.now(),
+                              ),
+                            )),
+                        const SizedBox(height: 10),
+                        if (_recomendaciones.isNotEmpty)
+                          ..._recomendaciones.map((cancion) => GestureDetector(
+                                onTap: () {
+                                  context.push('/player', extra: cancion);
+                                },
+                                child: Card(
+                                  margin:
+                                      const EdgeInsets.symmetric(vertical: 8.0),
+                                  elevation: 4,
+                                  shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(16)),
+                                  child: ListTile(
+                                    leading: cancion.imagen != null
+                                        ? ClipRRect(
+                                            borderRadius:
+                                                BorderRadius.circular(8),
+                                            child: Image.network(
+                                              cancion.imagen!,
+                                              width: 56,
+                                              height: 56,
+                                              fit: BoxFit.cover,
+                                            ),
+                                          )
+                                        : const Icon(Icons.music_note,
+                                            size: 40),
+                                    title: Text(
+                                        '${cancion.artista} - ${cancion.nombre}'),
+                                    subtitle: Text(cancion.preview != null
+                                        ? 'Preview disponible'
+                                        : 'Sin preview'),
+                                    trailing: const Icon(Icons.play_arrow),
+                                  ),
+                                ),
+                              )),
+                      ],
                     ),
                   ),
                 ),
