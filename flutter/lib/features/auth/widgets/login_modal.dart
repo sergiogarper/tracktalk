@@ -105,6 +105,7 @@ class _LoginModalState extends State<LoginModal> {
                   ),
                   const SizedBox(height: 24),
                   TextFormField(
+                    keyboardType: TextInputType.emailAddress,
                     decoration: InputDecoration(
                       labelText: 'Correo electrónico',
                       labelStyle: const TextStyle(color: Color(0xFF2E4E45)),
@@ -127,9 +128,15 @@ class _LoginModalState extends State<LoginModal> {
                       focusColor: const Color(0xFF2E4E45),
                     ),
                     onChanged: (val) => email = val,
-                    validator: (val) => val == null || val.isEmpty
-                        ? 'Introduce tu email'
-                        : null,
+                    validator: (val) {
+                      if (val == null || val.isEmpty) {
+                        return 'Introduce tu email';
+                      }
+                      final emailRegex =
+                          RegExp(r'^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$');
+                      if (!emailRegex.hasMatch(val)) return 'Email no válido';
+                      return null;
+                    },
                   ),
                   const SizedBox(height: 16),
                   TextFormField(

@@ -27,7 +27,7 @@ npm init -y
 ### 2. Instalar dependencias necesarias
 
 ```bash
-npm install express cors body-parser sqlite3 dotenv axios openai
+npm install express cors body-parser sqlite3 dotenv axios openai spotify-preview-finder
 ```
 
 ---

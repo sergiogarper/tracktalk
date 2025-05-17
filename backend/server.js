@@ -7,6 +7,7 @@ const bodyParser = require('body-parser');
 const authRoutes = require('./routes/auth');
 const favoritosRoutes = require('./routes/favoritos');
 
+const chatRoutes = require('./routes/chat');
 
 const app = express();
 const port = 3000;
@@ -18,6 +19,9 @@ app.use(bodyParser.json());
 // Rutas
 app.use('/auth', authRoutes);
 app.use('/favoritos', favoritosRoutes);
+
+
+app.use('/chat', chatRoutes);
 
 
 // Arrancar servidor

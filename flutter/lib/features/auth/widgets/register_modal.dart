@@ -108,8 +108,16 @@ class _RegisterModalState extends State<RegisterModal> {
                     {
                       'label': 'Correo electrónico',
                       'onChanged': (val) => email = val,
-                      'validator': (val) =>
-                          val!.isEmpty ? 'Introduce un email' : null,
+                      'keyboardType': TextInputType.emailAddress,
+                      'validator': (val) {
+                        if (val == null || val.isEmpty) {
+                          return 'Introduce un email';
+                        }
+                        final emailRegex =
+                            RegExp(r'^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$');
+                        if (!emailRegex.hasMatch(val)) return 'Email no válido';
+                        return null;
+                      },
                     },
                     {
                       'label': 'Contraseña',
@@ -131,6 +139,10 @@ class _RegisterModalState extends State<RegisterModal> {
                       padding: const EdgeInsets.only(bottom: 16),
                       child: TextFormField(
                         obscureText: field['obscure'] == true,
+                        // especifica que es email para el @
+                        keyboardType:
+                            (field['keyboardType'] as TextInputType?) ??
+                                TextInputType.text,
                         decoration: InputDecoration(
                           labelText: field['label'] as String,
                           labelStyle: const TextStyle(color: Color(0xFF2E4E45)),

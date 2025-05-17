@@ -120,6 +120,7 @@ class HomeScreen extends StatelessWidget {
                                       leading: const Icon(Icons.logout),
                                       title: const Text('Cerrar sesión'),
                                       onTap: () {
+                                        UsuarioGlobal.reset();
                                         Navigator.of(context).pop();
                                         context.go('/login');
                                       },
