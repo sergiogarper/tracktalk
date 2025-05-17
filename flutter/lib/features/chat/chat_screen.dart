@@ -1,3 +1,4 @@
+// chat_screen.dart con tarjetas de recomendación personalizadas estilo favoritos
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:tracktalk/shared/memory/chat_memory.dart';
@@ -18,6 +19,7 @@ class _ChatScreenState extends State<ChatScreen> {
   final ScrollController _scrollController = ScrollController();
   final TextEditingController _controller = TextEditingController();
   final ChatService chatService = ChatService();
+  bool esperandoRespuesta = false;
 
   void _scrollToBottom() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -40,7 +42,7 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _scrollToBottom(); // Scroll automático al volver desde otra pantalla
+    _scrollToBottom();
   }
 
   void _handleSendMessage() async {
@@ -50,6 +52,7 @@ class _ChatScreenState extends State<ChatScreen> {
     setState(() {
       ChatMemory.addMessage({'text': userMessage, 'isUser': true});
       _controller.clear();
+      esperandoRespuesta = true;
     });
 
     _scrollToBottom();
@@ -68,6 +71,7 @@ class _ChatScreenState extends State<ChatScreen> {
           'recomendaciones': respuesta.canciones,
         });
         ChatMemory.chatId ??= respuesta.chatId;
+        esperandoRespuesta = false;
       });
       _scrollToBottom();
     } catch (e) {
@@ -76,9 +80,82 @@ class _ChatScreenState extends State<ChatScreen> {
           'text': '⚠️ Hubo un error al procesar tu mensaje.',
           'isUser': false,
         });
+        esperandoRespuesta = false;
       });
     }
     _scrollToBottom();
+  }
+
+  Widget buildRecommendationCard(Cancion cancion, BuildContext context) {
+    return GestureDetector(
+      onTap: () => context.push('/player', extra: cancion),
+      child: Container(
+        margin: const EdgeInsets.symmetric(vertical: 6),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: const Color.fromRGBO(246, 248, 243, 1),
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: const Color.fromRGBO(0, 0, 0, 0.05),
+              blurRadius: 6,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: cancion.imagen != null
+                  ? Image.network(
+                      cancion.imagen!,
+                      width: 60,
+                      height: 60,
+                      fit: BoxFit.cover,
+                    )
+                  : Image.asset(
+                      'assets/images/default_cover.png',
+                      width: 60,
+                      height: 60,
+                      fit: BoxFit.cover,
+                    ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    cancion.nombre,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: -0.5,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    cancion.artista,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: Colors.black54,
+                      letterSpacing: -0.5,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            IconButton(
+              icon: const Icon(Icons.play_circle_fill),
+              iconSize: 40,
+              color: const Color(0xFF2E4E45),
+              onPressed: () => context.push('/player', extra: cancion),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
@@ -131,11 +208,10 @@ class _ChatScreenState extends State<ChatScreen> {
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(20),
                               ),
-                              title: const Text(
-                                'Opciones',
-                                style: TextStyle(
-                                    fontSize: 20, fontWeight: FontWeight.bold),
-                              ),
+                              title: const Text('Opciones',
+                                  style: TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.bold)),
                               content: Column(
                                 mainAxisSize: MainAxisSize.min,
                                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -190,53 +266,96 @@ class _ChatScreenState extends State<ChatScreen> {
                                 timestamp: DateTime.now(),
                               ),
                               if (!isUser && recomendaciones != null)
-                                ...recomendaciones.map((cancion) {
-                                  return GestureDetector(
-                                    onTap: () =>
-                                        context.push('/player', extra: cancion),
-                                    child: Card(
-                                      margin: const EdgeInsets.symmetric(
-                                          vertical: 8.0),
-                                      elevation: 4,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(16),
-                                      ),
-                                      child: ListTile(
-                                        leading: cancion.imagen != null
-                                            ? ClipRRect(
-                                                borderRadius:
-                                                    BorderRadius.circular(8),
-                                                child: Image.network(
-                                                  cancion.imagen!,
-                                                  width: 56,
-                                                  height: 56,
-                                                  fit: BoxFit.cover,
-                                                ),
-                                              )
-                                            : const Icon(Icons.music_note,
-                                                size: 40),
-                                        title: Text(
-                                            '${cancion.artista} - ${cancion.nombre}'),
-                                        subtitle: Text(cancion.preview != null
-                                            ? 'Preview disponible'
-                                            : 'Sin preview'),
-                                        trailing: const Icon(Icons.play_arrow),
-                                      ),
-                                    ),
-                                  );
-                                }),
+                                ...recomendaciones.map((cancion) =>
+                                    buildRecommendationCard(cancion, context)),
                             ],
                           );
                         }),
+                        if (esperandoRespuesta)
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 12.0),
+                            child: Align(
+                              alignment: Alignment.centerLeft,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 16.0, vertical: 10.0),
+                                decoration: BoxDecoration(
+                                  color:
+                                      const Color.fromRGBO(255, 255, 255, 0.8),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: const Text(
+                                  'TrackTalk está escribiendo...',
+                                  style: TextStyle(
+                                      fontStyle: FontStyle.italic,
+                                      color: Colors.black87),
+                                ),
+                              ),
+                            ),
+                          ),
                       ],
                     ),
                   ),
                 ),
-                ChatInputField(
+                ChatInputFieldWidget(
                   controller: _controller,
                   onSend: _handleSendMessage,
                 ),
               ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class ChatInputFieldWidget extends StatelessWidget {
+  final TextEditingController controller;
+  final VoidCallback onSend;
+
+  const ChatInputFieldWidget({
+    super.key,
+    required this.controller,
+    required this.onSend,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
+      child: Row(
+        children: [
+          Expanded(
+            child: TextField(
+              controller: controller,
+              decoration: InputDecoration(
+                hintText: 'Escribe aquí tu mensaje...',
+                hintStyle: const TextStyle(letterSpacing: -1),
+                filled: true,
+                fillColor: const Color.fromRGBO(255, 255, 255, 0.9),
+                contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16.0, vertical: 12.0),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(20.0),
+                  borderSide:
+                      const BorderSide(color: Color(0xFF2E4E45), width: 2),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(20.0),
+                  borderSide:
+                      const BorderSide(color: Color(0xFF2E4E45), width: 2.5),
+                ),
+              ),
+              onSubmitted: (_) => onSend(),
+            ),
+          ),
+          const SizedBox(width: 10),
+          CircleAvatar(
+            backgroundColor: const Color(0xFF2E4E45),
+            child: IconButton(
+              icon: const Icon(Icons.send, color: Colors.white),
+              onPressed: onSend,
             ),
           ),
         ],
@@ -292,60 +411,6 @@ class ChatBubble extends StatelessWidget {
                 fontSize: 12,
                 color: isUser ? Colors.white70 : Colors.black45,
               ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class ChatInputField extends StatelessWidget {
-  final TextEditingController controller;
-  final VoidCallback onSend;
-
-  const ChatInputField({
-    super.key,
-    required this.controller,
-    required this.onSend,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
-      child: Row(
-        children: [
-          Expanded(
-            child: TextField(
-              controller: controller,
-              decoration: InputDecoration(
-                hintText: 'Escribe aquí tu mensaje...',
-                hintStyle: const TextStyle(letterSpacing: -1),
-                filled: true,
-                fillColor: const Color.fromRGBO(255, 255, 255, 0.9),
-                contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 16.0, vertical: 12.0),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(20.0),
-                  borderSide:
-                      const BorderSide(color: Color(0xFF2E4E45), width: 2),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(20.0),
-                  borderSide:
-                      const BorderSide(color: Color(0xFF2E4E45), width: 2.5),
-                ),
-              ),
-              onSubmitted: (_) => onSend(),
-            ),
-          ),
-          const SizedBox(width: 10),
-          CircleAvatar(
-            backgroundColor: const Color(0xFF2E4E45),
-            child: IconButton(
-              icon: const Icon(Icons.send, color: Colors.white),
-              onPressed: onSend,
             ),
           ),
         ],
