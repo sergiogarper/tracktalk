@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:tracktalk/shared/memory/chat_memory.dart';
-import 'package:tracktalk/shared/models/cancion_model.dart';
 import 'package:tracktalk/shared/services/chat_service.dart';
 import 'package:tracktalk/shared/widgets/custom_bottom_navbar.dart';
 import 'package:tracktalk/shared/models/usuario_global.dart';
 import 'package:tracktalk/shared/models/respuesta_chat.dart';
+import 'package:tracktalk/shared/models/cancion_model.dart';
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key});
@@ -19,9 +19,6 @@ class _ChatScreenState extends State<ChatScreen> {
   final TextEditingController _controller = TextEditingController();
   final ChatService chatService = ChatService();
 
-  int? _chatId;
-  List<Cancion> _recomendaciones = [];
-
   void _scrollToBottom() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_scrollController.hasClients) {
@@ -34,14 +31,25 @@ class _ChatScreenState extends State<ChatScreen> {
     });
   }
 
+  @override
+  void initState() {
+    super.initState();
+    _scrollToBottom();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _scrollToBottom(); // Scroll automático al volver desde otra pantalla
+  }
+
   void _handleSendMessage() async {
     if (_controller.text.trim().isEmpty || UsuarioGlobal.id == null) return;
 
     final userMessage = _controller.text.trim();
     setState(() {
-      ChatMemory().addMessage({'text': userMessage, 'isUser': true});
+      ChatMemory.addMessage({'text': userMessage, 'isUser': true});
       _controller.clear();
-      _recomendaciones = [];
     });
 
     _scrollToBottom();
@@ -50,23 +58,26 @@ class _ChatScreenState extends State<ChatScreen> {
       final RespuestaChat respuesta = await chatService.enviarMensaje(
         usuarioId: UsuarioGlobal.id!,
         mensajeUsuario: userMessage,
-        chatId: _chatId,
+        chatId: ChatMemory.chatId,
       );
 
       setState(() {
-        ChatMemory().addMessage({'text': respuesta.mensajeIA, 'isUser': false});
-        _recomendaciones = respuesta.canciones;
-        _chatId ??= respuesta.chatId;
+        ChatMemory.addMessage({
+          'text': respuesta.mensajeIA,
+          'isUser': false,
+          'recomendaciones': respuesta.canciones,
+        });
+        ChatMemory.chatId ??= respuesta.chatId;
       });
+      _scrollToBottom();
     } catch (e) {
       setState(() {
-        ChatMemory().addMessage({
+        ChatMemory.addMessage({
           'text': '⚠️ Hubo un error al procesar tu mensaje.',
           'isUser': false,
         });
       });
     }
-
     _scrollToBottom();
   }
 
@@ -134,9 +145,8 @@ class _ChatScreenState extends State<ChatScreen> {
                                     title: const Text('Nuevo chat'),
                                     onTap: () {
                                       setState(() {
-                                        ChatMemory().clearMessages();
-                                        _recomendaciones.clear();
-                                        _chatId = null;
+                                        ChatMemory.clearMessages();
+                                        ChatMemory.chatId = null;
                                       });
                                       Navigator.of(context).pop();
                                     },
@@ -163,51 +173,61 @@ class _ChatScreenState extends State<ChatScreen> {
                     child: ListView(
                       controller: _scrollController,
                       children: [
-                        ...ChatMemory().messages.map((msg) => Align(
-                              alignment: msg['isUser']
-                                  ? Alignment.centerRight
-                                  : Alignment.centerLeft,
-                              child: ChatBubble(
-                                message: msg['text'],
-                                isUser: msg['isUser'],
+                        ...ChatMemory.messages.map((msg) {
+                          final isUser = msg['isUser'] as bool;
+                          final text = msg['text'] as String;
+                          final List<Cancion>? recomendaciones =
+                              msg['recomendaciones'] as List<Cancion>?;
+
+                          return Column(
+                            crossAxisAlignment: isUser
+                                ? CrossAxisAlignment.end
+                                : CrossAxisAlignment.start,
+                            children: [
+                              ChatBubble(
+                                message: text,
+                                isUser: isUser,
                                 timestamp: DateTime.now(),
                               ),
-                            )),
-                        const SizedBox(height: 10),
-                        if (_recomendaciones.isNotEmpty)
-                          ..._recomendaciones.map((cancion) => GestureDetector(
-                                onTap: () {
-                                  context.push('/player', extra: cancion);
-                                },
-                                child: Card(
-                                  margin:
-                                      const EdgeInsets.symmetric(vertical: 8.0),
-                                  elevation: 4,
-                                  shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(16)),
-                                  child: ListTile(
-                                    leading: cancion.imagen != null
-                                        ? ClipRRect(
-                                            borderRadius:
-                                                BorderRadius.circular(8),
-                                            child: Image.network(
-                                              cancion.imagen!,
-                                              width: 56,
-                                              height: 56,
-                                              fit: BoxFit.cover,
-                                            ),
-                                          )
-                                        : const Icon(Icons.music_note,
-                                            size: 40),
-                                    title: Text(
-                                        '${cancion.artista} - ${cancion.nombre}'),
-                                    subtitle: Text(cancion.preview != null
-                                        ? 'Preview disponible'
-                                        : 'Sin preview'),
-                                    trailing: const Icon(Icons.play_arrow),
-                                  ),
-                                ),
-                              )),
+                              if (!isUser && recomendaciones != null)
+                                ...recomendaciones.map((cancion) {
+                                  return GestureDetector(
+                                    onTap: () =>
+                                        context.push('/player', extra: cancion),
+                                    child: Card(
+                                      margin: const EdgeInsets.symmetric(
+                                          vertical: 8.0),
+                                      elevation: 4,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(16),
+                                      ),
+                                      child: ListTile(
+                                        leading: cancion.imagen != null
+                                            ? ClipRRect(
+                                                borderRadius:
+                                                    BorderRadius.circular(8),
+                                                child: Image.network(
+                                                  cancion.imagen!,
+                                                  width: 56,
+                                                  height: 56,
+                                                  fit: BoxFit.cover,
+                                                ),
+                                              )
+                                            : const Icon(Icons.music_note,
+                                                size: 40),
+                                        title: Text(
+                                            '${cancion.artista} - ${cancion.nombre}'),
+                                        subtitle: Text(cancion.preview != null
+                                            ? 'Preview disponible'
+                                            : 'Sin preview'),
+                                        trailing: const Icon(Icons.play_arrow),
+                                      ),
+                                    ),
+                                  );
+                                }),
+                            ],
+                          );
+                        }),
                       ],
                     ),
                   ),
