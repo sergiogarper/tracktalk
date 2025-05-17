@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:tracktalk/features/auth/widgets/login_modal.dart';
+import 'package:tracktalk/features/auth/widgets/register_modal.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -91,7 +93,12 @@ class _LoginScreenState extends State<LoginScreen>
                   width: double.infinity,
                   child: ElevatedButton(
                     onPressed: () {
-                      context.go('/login-form');
+                      showModalBottomSheet(
+                        context: context,
+                        isScrollControlled: true,
+                        backgroundColor: Colors.transparent,
+                        builder: (context) => const LoginModal(),
+                      );
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF2E4E45),
@@ -115,7 +122,12 @@ class _LoginScreenState extends State<LoginScreen>
                   width: double.infinity,
                   child: TextButton(
                     onPressed: () {
-                      context.go('/register');
+                      showModalBottomSheet(
+                        context: context,
+                        isScrollControlled: true,
+                        backgroundColor: Colors.transparent,
+                        builder: (context) => const RegisterModal(),
+                      );
                     },
                     style: TextButton.styleFrom(
                       backgroundColor: const Color.fromRGBO(231, 236, 221, 1),
