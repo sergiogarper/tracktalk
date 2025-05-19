@@ -23,6 +23,11 @@ class _PlayerScreenState extends State<PlayerScreen> {
     super.initState();
     if (widget.cancion != null) {
       _playPreview();
+      _player.onPositionChanged.listen((Duration position) {
+        setState(() {
+          _currentValue = position.inSeconds.toDouble().clamp(0, 30);
+        });
+      });
     } else {
       WidgetsBinding.instance.addPostFrameCallback((_) {});
     }
@@ -45,6 +50,17 @@ class _PlayerScreenState extends State<PlayerScreen> {
   void dispose() {
     _player.dispose();
     super.dispose();
+  }
+
+  String _formatDuration(double seconds) {
+    final int totalSeconds = seconds.floor();
+    final minutes = (totalSeconds ~/ 60).toString().padLeft(1, '0');
+    final secs = (totalSeconds % 60).toString().padLeft(2, '0');
+    return '$minutes:$secs';
+  }
+
+  void _seekTo(double seconds) {
+    _player.seek(Duration(seconds: seconds.toInt()));
   }
 
   @override
@@ -151,9 +167,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
                         max: 30,
                         onChanged: hayCancion
                             ? (value) {
-                                setState(() {
-                                  _currentValue = value;
-                                });
+                                _seekTo(value);
                               }
                             : null,
                         activeColor: const Color(0xFF2E4E45),
@@ -163,9 +177,10 @@ class _PlayerScreenState extends State<PlayerScreen> {
                         padding: const EdgeInsets.symmetric(horizontal: 8.0),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: const [
-                            Text('0:00', style: TextStyle(fontSize: 16)),
-                            Text('0:30', style: TextStyle(fontSize: 16)),
+                          children: [
+                            Text(_formatDuration(_currentValue),
+                                style: const TextStyle(fontSize: 16)),
+                            const Text('0:30', style: TextStyle(fontSize: 16)),
                           ],
                         ),
                       ),
