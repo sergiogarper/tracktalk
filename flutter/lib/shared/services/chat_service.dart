@@ -1,9 +1,10 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../models/respuesta_chat.dart';
+import 'package:tracktalk/shared/constants/api_config.dart';
 
 class ChatService {
-  final String baseUrl = 'http://10.0.2.2:3000/chat';
+  final String baseUrl = '${ApiConfig.baseUrl}/chat';
 
   Future<RespuestaChat> enviarMensaje({
     required int usuarioId,

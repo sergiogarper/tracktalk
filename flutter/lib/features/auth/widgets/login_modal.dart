@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:go_router/go_router.dart';
 import 'package:tracktalk/shared/models/usuario_global.dart';
+import 'package:tracktalk/shared/constants/api_config.dart';
 
 class LoginModal extends StatefulWidget {
   const LoginModal({super.key});
@@ -26,7 +27,7 @@ class _LoginModalState extends State<LoginModal> {
       mensaje = '';
     });
 
-    final url = Uri.parse('http://10.0.2.2:3000/auth/login');
+    final url = Uri.parse('${ApiConfig.baseUrl}/auth/login');
 
     try {
       final response = await http.post(

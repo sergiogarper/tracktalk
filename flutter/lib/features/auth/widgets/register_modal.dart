@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:tracktalk/shared/constants/api_config.dart';
 
 class RegisterModal extends StatefulWidget {
   const RegisterModal({super.key});
@@ -26,7 +27,7 @@ class _RegisterModalState extends State<RegisterModal> {
       mensaje = '';
     });
 
-    final url = Uri.parse('http://10.0.2.2:3000/auth/register');
+    final url = Uri.parse('${ApiConfig.baseUrl}/auth/register');
 
     try {
       final response = await http.post(

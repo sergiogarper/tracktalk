@@ -3,5 +3,4 @@ DELETE FROM Mensaje;
 DELETE FROM Favorito;
 DELETE FROM Chat;
 DELETE FROM Cancion;
-DELETE FROM Usuario;
 DELETE FROM sqlite_sequence;
