@@ -1,3 +1,5 @@
+import 'package:tracktalk/shared/models/cancion_model.dart';
+
 class ChatMemory {
   static final List<Map<String, dynamic>> _messages = [];
   static int? _chatId;
@@ -14,5 +16,20 @@ class ChatMemory {
   static void clearMessages() {
     _messages.clear();
     _chatId = null;
+  }
+
+  static void setMessages(List<dynamic> mensajes) {
+    _messages.clear();
+    for (var msg in mensajes) {
+      _messages.add({
+        'text': msg['text'],
+        'isUser': msg['isUser'],
+        'recomendaciones': msg['recomendaciones'] != null
+            ? (msg['recomendaciones'] as List<dynamic>)
+                .map((json) => Cancion.fromJson(json))
+                .toList()
+            : null,
+      });
+    }
   }
 }

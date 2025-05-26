@@ -1,4 +1,6 @@
 // chat_screen.dart con tarjetas de recomendación personalizadas estilo favoritos
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:tracktalk/shared/memory/chat_memory.dart';
@@ -230,8 +232,71 @@ class _ChatScreenState extends State<ChatScreen> {
                                   ListTile(
                                     leading: const Icon(Icons.history),
                                     title: const Text('Historial de chats'),
-                                    onTap: () {
+                                    onTap: () async {
                                       Navigator.of(context).pop();
+                                      final userId = UsuarioGlobal.id;
+                                      if (userId == null) return;
+
+                                      try {
+                                        final historial = await chatService
+                                            .obtenerHistorialChats(userId);
+
+                                        showDialog(
+                                          context: context,
+                                          builder: (context) => AlertDialog(
+                                            title: const Text(
+                                                'Historial de chats'),
+                                            content: SizedBox(
+                                              width: double.maxFinite,
+                                              child: ListView.builder(
+                                                shrinkWrap: true,
+                                                itemCount: historial.length,
+                                                itemBuilder: (context, index) {
+                                                  final chat = historial[index];
+                                                  final fecha = DateTime.parse(
+                                                      chat['fecha']);
+                                                  final chatId =
+                                                      chat['chat_id'];
+
+                                                  return ListTile(
+                                                    leading: const Icon(Icons
+                                                        .chat_bubble_outline),
+                                                    title: Text(
+                                                        'Chat del ${fecha.day}/${fecha.month} - ${fecha.hour}:${fecha.minute.toString().padLeft(2, '0')}'),
+                                                    onTap: () async {
+                                                      Navigator.of(context)
+                                                          .pop();
+                                                      final completo =
+                                                          await chatService
+                                                              .obtenerChatCompleto(
+                                                                  userId,
+                                                                  chatId);
+
+                                                      print(
+                                                          jsonEncode(completo));
+                                                      setState(() {
+                                                        ChatMemory.chatId =
+                                                            chatId;
+                                                        ChatMemory.setMessages(
+                                                            completo);
+                                                      });
+
+                                                      _scrollToBottom();
+                                                    },
+                                                  );
+                                                },
+                                              ),
+                                            ),
+                                          ),
+                                        );
+                                      } catch (e) {
+                                        ScaffoldMessenger.of(context)
+                                            .showSnackBar(
+                                          const SnackBar(
+                                              content: Text(
+                                                  'Error al cargar el historial')),
+                                        );
+                                      }
                                     },
                                   ),
                                 ],

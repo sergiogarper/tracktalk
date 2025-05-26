@@ -2,7 +2,7 @@ class Cancion {
   final String id;
   final String nombre;
   final String artista;
-  final String url;
+  final String? url;
   final String? preview;
   final String? imagen;
 
@@ -10,7 +10,7 @@ class Cancion {
     required this.id,
     required this.nombre,
     required this.artista,
-    required this.url,
+    this.url,
     this.preview,
     this.imagen,
   });
