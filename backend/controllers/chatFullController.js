@@ -1,11 +1,15 @@
-const db = require('../db/sqlite');
-const { generarRecomendacion } = require('../services/recomendacionService');
+const db = require("../db/sqlite");
+const { generarRecomendacion } = require("../services/recomendacionService");
 
 async function procesarMensajeChat(req, res) {
   const { usuario_id, mensaje_usuario, chat_id } = req.body;
 
   if (!usuario_id || !mensaje_usuario) {
-    return res.status(400).json({ error: 'Faltan campos obligatorios: usuario_id o mensaje_usuario' });
+    return res
+      .status(400)
+      .json({
+        error: "Faltan campos obligatorios: usuario_id o mensaje_usuario",
+      });
   }
 
   try {
@@ -17,7 +21,7 @@ async function procesarMensajeChat(req, res) {
     if (!chatId) {
       chatId = await new Promise((resolve, reject) => {
         db.run(
-          'INSERT INTO Chat (usuario_id, fecha) VALUES (?, ?)',
+          "INSERT INTO Chat (usuario_id, fecha) VALUES (?, ?)",
           [usuario_id, fecha],
           function (err) {
             if (err) reject(err);
@@ -40,7 +44,9 @@ async function procesarMensajeChat(req, res) {
     });
 
     // 3. Generar respuesta de la IA y recomendaciones
-    const { mensajeIA, canciones } = await generarRecomendacion(mensaje_usuario);
+    const { mensajeIA, canciones } = await generarRecomendacion(
+      mensaje_usuario
+    );
 
     // 4. Guardar mensaje IA
     const mensajeIAId = await new Promise((resolve, reject) => {
@@ -58,17 +64,24 @@ async function procesarMensajeChat(req, res) {
     for (const cancion of canciones) {
       await new Promise((resolve, reject) => {
         db.run(
-          'INSERT OR IGNORE INTO Cancion (id, nombre, artista, url, imagen_url, preview_url) VALUES (?, ?, ?, ?, ?, ?)',
-          [cancion.id, cancion.nombre, cancion.artista, cancion.url, cancion.imagen, cancion.preview],
-          err => err ? reject(err) : resolve()
+          "INSERT OR IGNORE INTO Cancion (id, nombre, artista, url, imagen_url, preview_url) VALUES (?, ?, ?, ?, ?, ?)",
+          [
+            cancion.id,
+            cancion.nombre,
+            cancion.artista,
+            cancion.url,
+            cancion.imagen,
+            cancion.preview,
+          ],
+          (err) => (err ? reject(err) : resolve())
         );
       });
 
       await new Promise((resolve, reject) => {
         db.run(
-          'INSERT INTO Recomendacion (mensaje_id, cancion_id) VALUES (?, ?)',
+          "INSERT INTO Recomendacion (mensaje_id, cancion_id) VALUES (?, ?)",
           [mensajeIAId, cancion.id],
-          err => err ? reject(err) : resolve()
+          (err) => (err ? reject(err) : resolve())
         );
       });
     }
@@ -80,10 +93,11 @@ async function procesarMensajeChat(req, res) {
       mensaje_ia: mensajeIA,
       canciones,
     });
-
   } catch (err) {
-    console.error('❌ Error al procesar el mensaje completo:', err);
-    res.status(500).json({ error: 'Error interno del servidor al procesar el mensaje' });
+    console.error("❌ Error al procesar el mensaje completo:", err);
+    res
+      .status(500)
+      .json({ error: "Error interno del servidor al procesar el mensaje" });
   }
 }
 
@@ -91,12 +105,12 @@ function obtenerHistorialChats(req, res) {
   const usuarioId = req.params.usuario_id;
 
   db.all(
-    'SELECT id AS chat_id, fecha FROM Chat WHERE usuario_id = ? ORDER BY fecha DESC',
+    "SELECT id AS chat_id, fecha FROM Chat WHERE usuario_id = ? ORDER BY fecha DESC",
     [usuarioId],
     (err, rows) => {
       if (err) {
-        console.error('❌ Error al obtener historial:', err);
-        return res.status(500).json({ error: 'Error al obtener el historial' });
+        console.error("❌ Error al obtener historial:", err);
+        return res.status(500).json({ error: "Error al obtener el historial" });
       }
 
       res.json(rows);
@@ -119,27 +133,28 @@ function obtenerChatCompleto(req, res) {
     [chat_id, usuario_id],
     async (err, rows) => {
       if (err) {
-        console.error('❌ Error al obtener el chat completo:', err);
-        return res.status(500).json({ error: 'Error al obtener el chat' });
+        console.error("❌ Error al obtener el chat completo:", err);
+        return res.status(500).json({ error: "Error al obtener el chat" });
       }
 
       const mensajes = [];
 
       for (const row of rows) {
-        const isUser = row.emisor === 'usuario';
+        const isUser = row.emisor === "usuario";
         let recomendaciones = [];
 
         if (!isUser && row.canciones) {
-          const ids = row.canciones.split(',');
+          const ids = row.canciones.split(",");
           recomendaciones = await Promise.all(
-            ids.map(id =>
-              new Promise((resolve, reject) => {
-                db.get(
-                  'SELECT id, nombre, artista, imagen_url AS imagen, preview_url AS preview FROM Cancion WHERE id = ?',
-                  [id],
-                  (err, data) => err ? reject(err) : resolve(data)
-                );
-              })
+            ids.map(
+              (id) =>
+                new Promise((resolve, reject) => {
+                  db.get(
+                    "SELECT id, nombre, artista, url, imagen_url AS imagen, preview_url AS preview FROM Cancion WHERE id = ?",
+                    [id],
+                    (err, data) => (err ? reject(err) : resolve(data))
+                  );
+                })
             )
           );
         }
@@ -156,10 +171,8 @@ function obtenerChatCompleto(req, res) {
   );
 }
 
-
-
 module.exports = {
   procesarMensajeChat,
   obtenerHistorialChats,
-  obtenerChatCompleto
+  obtenerChatCompleto,
 };

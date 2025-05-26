@@ -4,6 +4,8 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:tracktalk/shared/models/cancion_model.dart';
 import 'package:tracktalk/shared/widgets/custom_bottom_navbar.dart';
 import 'package:marquee/marquee.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class PlayerScreen extends StatefulWidget {
   final Cancion? cancion;
@@ -75,6 +77,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
   @override
   Widget build(BuildContext context) {
     final c = widget.cancion;
+
     final hayCancion = c != null;
     final screenWidth = MediaQuery.of(context).size.width;
 
@@ -218,8 +221,34 @@ class _PlayerScreenState extends State<PlayerScreen> {
                       ),
                       const SizedBox(width: 24),
                       IconButton(
-                        icon: const Icon(Icons.share, size: 28),
-                        onPressed: hayCancion ? () {} : null,
+                        icon: const FaIcon(FontAwesomeIcons.spotify,
+                            size: 28, color: Color(0xFF2E4E45)),
+                        onPressed: hayCancion && c.url != null
+                            ? () async {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Abriendo Spotify...'),
+                                    duration: Duration(seconds: 2),
+                                  ),
+                                );
+
+                                final Uri spotifyUrl = Uri.parse(c.url!);
+                                if (await canLaunchUrl(spotifyUrl)) {
+                                  await Future.delayed(
+                                      const Duration(seconds: 1));
+                                  await launchUrl(spotifyUrl,
+                                      mode: LaunchMode.externalApplication);
+                                } else {
+                                  // ignore: use_build_context_synchronously
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text(
+                                          'No se pudo abrir el enlace de Spotify'),
+                                    ),
+                                  );
+                                }
+                              }
+                            : null,
                       ),
                     ],
                   ),
