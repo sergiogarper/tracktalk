@@ -23,8 +23,8 @@ const addFavorito = (req, res) => {
 
     // Insertar canción si no existe
     const insertCancionQuery = `
-      INSERT OR IGNORE INTO Cancion (id, nombre, artista, imagen_url, preview_url)
-      VALUES (?, ?, ?, ?, ?)
+      INSERT OR IGNORE INTO Cancion (id, nombre, artista, url, imagen_url, preview_url)
+      VALUES (?, ?, ?, ?, ?, ?)
     `;
 
     db.run(

@@ -22,6 +22,7 @@ db.serialize(() => {
       id TEXT PRIMARY KEY,
       nombre TEXT NOT NULL,
       artista TEXT,
+      url TEXT,
       imagen_url TEXT,
       preview_url TEXT
     )

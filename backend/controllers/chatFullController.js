@@ -58,8 +58,8 @@ async function procesarMensajeChat(req, res) {
     for (const cancion of canciones) {
       await new Promise((resolve, reject) => {
         db.run(
-          'INSERT OR IGNORE INTO Cancion (id, nombre, artista, imagen_url, preview_url) VALUES (?, ?, ?, ?, ?)',
-          [cancion.id, cancion.nombre, cancion.artista, cancion.imagen, cancion.preview],
+          'INSERT OR IGNORE INTO Cancion (id, nombre, artista, url, imagen_url, preview_url) VALUES (?, ?, ?, ?, ?, ?)',
+          [cancion.id, cancion.nombre, cancion.artista, cancion.url, cancion.imagen, cancion.preview],
           err => err ? reject(err) : resolve()
         );
       });
