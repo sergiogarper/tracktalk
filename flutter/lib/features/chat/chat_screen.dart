@@ -231,13 +231,13 @@ class _ChatScreenState extends State<ChatScreen> {
                                     leading: const Icon(Icons.history),
                                     title: const Text('Historial de chats'),
                                     onTap: () async {
-                                      Navigator.of(context).pop();
                                       final userId = UsuarioGlobal.id;
                                       if (userId == null) return;
 
                                       try {
                                         final historial = await chatService
                                             .obtenerHistorialChats(userId);
+                                        Navigator.of(context).pop();
 
                                         showDialog(
                                           context: context,
@@ -285,6 +285,7 @@ class _ChatScreenState extends State<ChatScreen> {
                                           ),
                                         );
                                       } catch (e) {
+                                        Navigator.of(context).pop();
                                         ScaffoldMessenger.of(context)
                                             .showSnackBar(
                                           const SnackBar(
