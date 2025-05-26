@@ -1,6 +1,4 @@
-// chat_screen.dart con tarjetas de recomendación personalizadas estilo favoritos
-import 'dart:convert';
-
+// ignore_for_file: use_build_context_synchronously
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:tracktalk/shared/memory/chat_memory.dart';
@@ -271,9 +269,6 @@ class _ChatScreenState extends State<ChatScreen> {
                                                               .obtenerChatCompleto(
                                                                   userId,
                                                                   chatId);
-
-                                                      print(
-                                                          jsonEncode(completo));
                                                       setState(() {
                                                         ChatMemory.chatId =
                                                             chatId;

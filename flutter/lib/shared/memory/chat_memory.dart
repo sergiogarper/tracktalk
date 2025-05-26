@@ -1,3 +1,4 @@
+// ignore_for_file: unnecessary_getters_setters
 import 'package:tracktalk/shared/models/cancion_model.dart';
 
 class ChatMemory {
