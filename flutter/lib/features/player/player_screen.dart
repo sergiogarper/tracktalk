@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:tracktalk/shared/models/cancion_model.dart';
 import 'package:tracktalk/shared/widgets/custom_bottom_navbar.dart';
+import 'package:marquee/marquee.dart';
 
 class PlayerScreen extends StatefulWidget {
   final Cancion? cancion;
@@ -28,8 +29,12 @@ class _PlayerScreenState extends State<PlayerScreen> {
           _currentValue = position.inSeconds.toDouble().clamp(0, 30);
         });
       });
-    } else {
-      WidgetsBinding.instance.addPostFrameCallback((_) {});
+      _player.onPlayerComplete.listen((event) {
+        setState(() {
+          _isPlaying = false;
+          _currentValue = 0;
+        });
+      });
     }
   }
 
@@ -63,10 +68,15 @@ class _PlayerScreenState extends State<PlayerScreen> {
     _player.seek(Duration(seconds: seconds.toInt()));
   }
 
+  String _tituloSinArtista(String nombre) {
+    return nombre.split(' - ').first.trim();
+  }
+
   @override
   Widget build(BuildContext context) {
     final c = widget.cancion;
     final hayCancion = c != null;
+    final screenWidth = MediaQuery.of(context).size.width;
 
     return Scaffold(
       backgroundColor: const Color(0xFFFAF8F6),
@@ -99,8 +109,10 @@ class _PlayerScreenState extends State<PlayerScreen> {
                   ),
                   const SizedBox(height: 10),
                   Container(
-                    width: 360,
-                    height: 360,
+                    constraints: BoxConstraints(
+                      maxWidth: screenWidth * 0.8,
+                      maxHeight: screenWidth * 0.8,
+                    ),
                     decoration: BoxDecoration(
                       image: hayCancion && c.imagen != null
                           ? DecorationImage(
@@ -123,24 +135,77 @@ class _PlayerScreenState extends State<PlayerScreen> {
                     ),
                   ),
                   const SizedBox(height: 24),
-                  Text(
-                    hayCancion ? c.nombre : 'Sin canción seleccionada',
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: -0.5,
-                    ),
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      final title = hayCancion
+                          ? _tituloSinArtista(c.nombre)
+                          : 'Sin canción seleccionada';
+
+                      final textPainter = TextPainter(
+                        text: TextSpan(
+                          text: title,
+                          style: const TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: -0.5,
+                          ),
+                        ),
+                        maxLines: 1,
+                        textDirection: TextDirection.ltr,
+                      )..layout(maxWidth: constraints.maxWidth);
+
+                      final isOverflowing = textPainter.didExceedMaxLines;
+
+                      return SizedBox(
+                        height: 30,
+                        width: double.infinity,
+                        child: isOverflowing
+                            ? Marquee(
+                                text: title,
+                                style: const TextStyle(
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: -0.5,
+                                ),
+                                scrollAxis: Axis.horizontal,
+                                blankSpace: 40.0,
+                                velocity: 30.0,
+                                pauseAfterRound: Duration(seconds: 2),
+                                startPadding: 10.0,
+                                accelerationDuration: Duration(seconds: 1),
+                                accelerationCurve: Curves.linear,
+                                decelerationDuration:
+                                    Duration(milliseconds: 500),
+                                decelerationCurve: Curves.easeOut,
+                              )
+                            : Text(
+                                title,
+                                textAlign: TextAlign.center,
+                                overflow: TextOverflow.ellipsis,
+                                maxLines: 1,
+                                style: const TextStyle(
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: -0.5,
+                                ),
+                              ),
+                      );
+                    },
                   ),
                   const SizedBox(height: 4),
-                  Text(
-                    hayCancion
-                        ? c.artista
-                        : 'Selecciona una antes de reproducir',
-                    style: const TextStyle(
-                      fontSize: 18,
-                      color: Colors.black87,
-                      letterSpacing: -1,
+                  Flexible(
+                    child: Text(
+                      hayCancion
+                          ? c.artista
+                          : 'Selecciona una antes de reproducir',
+                      textAlign: TextAlign.center,
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        color: Colors.black87,
+                        letterSpacing: -1,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 8),

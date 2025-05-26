@@ -13,6 +13,6 @@ class ChatMemory {
 
   static void clearMessages() {
     _messages.clear();
-    _chatId = null; // 🧹 resetea también el chatId cuando se reinicia
+    _chatId = null;
   }
 }
