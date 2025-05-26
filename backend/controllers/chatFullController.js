@@ -87,4 +87,79 @@ async function procesarMensajeChat(req, res) {
   }
 }
 
-module.exports = { procesarMensajeChat };
+function obtenerHistorialChats(req, res) {
+  const usuarioId = req.params.usuario_id;
+
+  db.all(
+    'SELECT id AS chat_id, fecha FROM Chat WHERE usuario_id = ? ORDER BY fecha DESC',
+    [usuarioId],
+    (err, rows) => {
+      if (err) {
+        console.error('❌ Error al obtener historial:', err);
+        return res.status(500).json({ error: 'Error al obtener el historial' });
+      }
+
+      res.json(rows);
+    }
+  );
+}
+
+function obtenerChatCompleto(req, res) {
+  const { usuario_id, chat_id } = req.params;
+
+  db.all(
+    `SELECT M.id, M.emisor, M.contenido, M.fecha_envio,
+            GROUP_CONCAT(R.cancion_id) AS canciones
+     FROM Mensaje M
+     LEFT JOIN Recomendacion R ON M.id = R.mensaje_id
+     JOIN Chat C ON C.id = M.chat_id
+     WHERE M.chat_id = ? AND C.usuario_id = ?
+     GROUP BY M.id
+     ORDER BY M.fecha_envio ASC`,
+    [chat_id, usuario_id],
+    async (err, rows) => {
+      if (err) {
+        console.error('❌ Error al obtener el chat completo:', err);
+        return res.status(500).json({ error: 'Error al obtener el chat' });
+      }
+
+      const mensajes = [];
+
+      for (const row of rows) {
+        const isUser = row.emisor === 'usuario';
+        let recomendaciones = [];
+
+        if (!isUser && row.canciones) {
+          const ids = row.canciones.split(',');
+          recomendaciones = await Promise.all(
+            ids.map(id =>
+              new Promise((resolve, reject) => {
+                db.get(
+                  'SELECT id, nombre, artista, imagen_url AS imagen, preview_url AS preview FROM Cancion WHERE id = ?',
+                  [id],
+                  (err, data) => err ? reject(err) : resolve(data)
+                );
+              })
+            )
+          );
+        }
+
+        mensajes.push({
+          text: row.contenido,
+          isUser,
+          recomendaciones,
+        });
+      }
+
+      res.json(mensajes);
+    }
+  );
+}
+
+
+
+module.exports = {
+  procesarMensajeChat,
+  obtenerHistorialChats,
+  obtenerChatCompleto
+};
