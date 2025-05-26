@@ -27,6 +27,6 @@ app.use('/chat', chatFullRoutes);
 
 
 // Arrancar servidor
-app.listen(port, () => {
-  console.log(`🚀 Servidor backend escuchando en http://localhost:${port}`);
+app.listen(port, '0.0.0.0', () => {
+  console.log(`🚀 Servidor backend escuchando en http://0.0.0.0:${port}`);
 });
