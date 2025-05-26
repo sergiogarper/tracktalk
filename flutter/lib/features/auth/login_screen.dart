@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:tracktalk/features/auth/widgets/login_modal.dart';
 import 'package:tracktalk/features/auth/widgets/register_modal.dart';
 
@@ -194,23 +193,6 @@ class _LoginScreenState extends State<LoginScreen>
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 40.0),
               child: buildAnimatedContent(),
-            ),
-          ),
-          Positioned(
-            bottom: 20,
-            right: 20,
-            child: TextButton(
-              onPressed: () {
-                context.go('/home');
-              },
-              child: const Text(
-                'Entrar sin iniciar sesión',
-                style: TextStyle(
-                  color: Color(0xFF2E4E45),
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
             ),
           ),
         ],

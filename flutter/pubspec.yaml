@@ -1,11 +1,11 @@
 name: tracktalk
 description: An AI-driven music chat app.
-publish_to: 'none'
+publish_to: "none"
 
 version: 1.0.0+1
 
 environment:
-  sdk: '>=3.2.0 <4.0.0'
+  sdk: ">=3.2.0 <4.0.0"
 
 dependencies:
   flutter:
@@ -56,9 +56,8 @@ flutter_launcher_icons:
   image_path: "assets/images/icon_launcher.png"
 
 flutter_native_splash:
-  color: "#FFFFFF" 
+  color: "#FFFFFF"
   image: assets/images/splash_icon.png
   android: true
   ios: true
   android_gravity: center
-

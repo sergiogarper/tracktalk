@@ -255,11 +255,20 @@ class _PlayerScreenState extends State<PlayerScreen> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       IconButton(
-                        icon: const Icon(Icons.skip_previous, size: 40),
+                        icon: const Icon(Icons.replay_5, size: 50),
                         color: const Color(0xFF2E4E45),
-                        onPressed: hayCancion ? () {} : null,
+                        onPressed: hayCancion
+                            ? () {
+                                final newTime =
+                                    (_currentValue - 5).clamp(0, 30).toDouble();
+                                _seekTo(newTime);
+                                setState(() {
+                                  _currentValue = newTime;
+                                });
+                              }
+                            : null,
                       ),
-                      const SizedBox(width: 30),
+                      const SizedBox(width: 16),
                       IconButton(
                         icon: Icon(
                           _isPlaying
@@ -274,11 +283,20 @@ class _PlayerScreenState extends State<PlayerScreen> {
                               }
                             : null,
                       ),
-                      const SizedBox(width: 30),
+                      const SizedBox(width: 16),
                       IconButton(
-                        icon: const Icon(Icons.skip_next, size: 40),
+                        icon: const Icon(Icons.forward_5, size: 50),
                         color: const Color(0xFF2E4E45),
-                        onPressed: hayCancion ? () {} : null,
+                        onPressed: hayCancion
+                            ? () {
+                                final newTime =
+                                    (_currentValue + 5).clamp(0, 30).toDouble();
+                                _seekTo(newTime);
+                                setState(() {
+                                  _currentValue = newTime;
+                                });
+                              }
+                            : null,
                       ),
                     ],
                   ),
