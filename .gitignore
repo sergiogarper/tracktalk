@@ -30,3 +30,4 @@
 # ─── OTRAS RUTAS ─────────────────────
 .idea/
 .vscode/
+*.zip
