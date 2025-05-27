@@ -23,8 +23,14 @@ final GoRouter appRouter = GoRouter(
     GoRoute(
       path: '/player',
       builder: (context, state) {
-        final cancion = state.extra is Cancion ? state.extra as Cancion : null;
-        return PlayerScreen(cancion: cancion);
+        final extra = state.extra as Map<String, dynamic>?;
+        final cancion = extra?['cancion'] as Cancion?;
+        final from = extra?['from'] as String? ?? 'home';
+
+        return PlayerScreen(
+          cancion: cancion,
+          from: from,
+        );
       },
     ),
   ],

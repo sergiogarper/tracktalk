@@ -14,8 +14,9 @@ import 'package:tracktalk/shared/models/usuario_global.dart';
 
 class PlayerScreen extends StatefulWidget {
   final Cancion? cancion;
+  final String from;
 
-  const PlayerScreen({super.key, this.cancion});
+  const PlayerScreen({super.key, this.cancion, required this.from});
 
   @override
   State<PlayerScreen> createState() => _PlayerScreenState();
@@ -137,7 +138,11 @@ class _PlayerScreenState extends State<PlayerScreen> {
                     child: IconButton(
                       icon: const Icon(Icons.arrow_back, size: 32),
                       onPressed: () {
-                        context.go('/home');
+                        if (widget.from == 'chat') {
+                          context.go('/chat');
+                        } else {
+                          context.go('/home');
+                        }
                       },
                     ),
                   ),

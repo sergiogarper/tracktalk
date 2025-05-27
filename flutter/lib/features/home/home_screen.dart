@@ -45,7 +45,10 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget buildFavoriteCard(Cancion cancion, BuildContext context) {
     return GestureDetector(
-      onTap: () => context.push('/player', extra: cancion),
+      onTap: () => context.push('/player', extra: {
+        'cancion': cancion,
+        'from': 'home',
+      }),
       child: Container(
         margin: const EdgeInsets.symmetric(vertical: 6),
         padding: const EdgeInsets.all(12),
@@ -100,7 +103,10 @@ class _HomeScreenState extends State<HomeScreen> {
               icon: const Icon(Icons.play_circle_fill),
               iconSize: 40,
               color: const Color(0xFF2E4E45),
-              onPressed: () => context.push('/player', extra: cancion),
+              onPressed: () => context.push('/player', extra: {
+                'cancion': cancion,
+                'from': 'home',
+              }),
             ),
           ],
         ),
