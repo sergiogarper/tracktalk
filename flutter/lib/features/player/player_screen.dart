@@ -1,3 +1,5 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:audioplayers/audioplayers.dart';
@@ -7,6 +9,8 @@ import 'package:marquee/marquee.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:tracktalk/shared/memory/player_memory.dart';
+import 'package:tracktalk/shared/services/favorito_service.dart';
+import 'package:tracktalk/shared/models/usuario_global.dart';
 
 class PlayerScreen extends StatefulWidget {
   final Cancion? cancion;
@@ -22,6 +26,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
   double _currentValue = 0;
   bool _isPlaying = false;
   Cancion? cancionActual;
+  bool esFavorita = false;
 
   @override
   void initState() {
@@ -50,7 +55,16 @@ class _PlayerScreenState extends State<PlayerScreen> {
           _currentValue = 0;
         });
       });
+      _comprobarFavorito();
     }
+  }
+
+  Future<void> _comprobarFavorito() async {
+    if (UsuarioGlobal.id == null || cancionActual == null) return;
+
+    final favoritos = await FavoritoService.obtenerFavoritos(UsuarioGlobal.id!);
+    final esta = favoritos.any((fav) => fav.id == cancionActual!.id);
+    setState(() => esFavorita = esta);
   }
 
   void _playPreview(Cancion cancion, {double startAt = 0}) async {
@@ -127,7 +141,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
                       },
                     ),
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 25),
                   Container(
                     constraints: BoxConstraints(
                       maxWidth: screenWidth * 0.8,
@@ -233,8 +247,57 @@ class _PlayerScreenState extends State<PlayerScreen> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       IconButton(
-                        icon: const Icon(Icons.favorite_border, size: 28),
-                        onPressed: hayCancion ? () {} : null,
+                        icon: Icon(
+                          esFavorita ? Icons.favorite : Icons.favorite_border,
+                          color: const Color(0xFF2E4E45),
+                          size: 32,
+                        ),
+                        onPressed: hayCancion
+                            ? () async {
+                                if (UsuarioGlobal.id == null || c.id.isEmpty) {
+                                  return;
+                                }
+
+                                try {
+                                  if (esFavorita) {
+                                    await FavoritoService.eliminarFavorito(
+                                        UsuarioGlobal.id!, c.id);
+                                    setState(() => esFavorita = false);
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                          content:
+                                              Text('Eliminado de favoritos')),
+                                    );
+                                  } else {
+                                    final exito =
+                                        await FavoritoService.guardarFavorito(
+                                            UsuarioGlobal.id!, c);
+                                    if (exito) {
+                                      setState(() => esFavorita = true);
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                        const SnackBar(
+                                            content:
+                                                Text('Añadido a favoritos')),
+                                      );
+                                    } else {
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                        const SnackBar(
+                                            content:
+                                                Text('Ya estaba en favoritos')),
+                                      );
+                                    }
+                                  }
+                                } catch (_) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                        content: Text(
+                                            'Error al modificar favorito')),
+                                  );
+                                }
+                              }
+                            : null,
                       ),
                       const SizedBox(width: 24),
                       IconButton(
@@ -256,7 +319,6 @@ class _PlayerScreenState extends State<PlayerScreen> {
                                   await launchUrl(spotifyUrl,
                                       mode: LaunchMode.externalApplication);
                                 } else {
-                                  // ignore: use_build_context_synchronously
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     const SnackBar(
                                       content: Text(

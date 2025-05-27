@@ -81,4 +81,31 @@ const getFavoritos = (req, res) => {
   });
 };
 
-module.exports = { addFavorito, getFavoritos };
+// Eliminar favorito
+const removeFavorito = (req, res) => {
+  const { usuario_id, cancion_id } = req.body;
+
+  if (!usuario_id || !cancion_id) {
+    return res.status(400).json({ error: 'Faltan datos' });
+  }
+
+  const deleteQuery = `
+    DELETE FROM Favorito
+    WHERE usuario_id = ? AND cancion_id = ?
+  `;
+
+  db.run(deleteQuery, [usuario_id, cancion_id], function (err) {
+    if (err) {
+      console.error('Error al eliminar favorito:', err);
+      return res.status(500).json({ error: 'Error al eliminar favorito' });
+    }
+
+    if (this.changes === 0) {
+      return res.status(404).json({ error: 'Favorito no encontrado' });
+    }
+
+    return res.status(200).json({ message: 'Favorito eliminado' });
+  });
+};
+
+module.exports = { addFavorito, getFavoritos, removeFavorito };
