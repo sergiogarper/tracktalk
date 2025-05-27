@@ -6,6 +6,7 @@ import 'package:tracktalk/shared/widgets/custom_bottom_navbar.dart';
 import 'package:marquee/marquee.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:tracktalk/shared/memory/player_memory.dart';
 
 class PlayerScreen extends StatefulWidget {
   final Cancion? cancion;
@@ -20,17 +21,29 @@ class _PlayerScreenState extends State<PlayerScreen> {
   final AudioPlayer _player = AudioPlayer();
   double _currentValue = 0;
   bool _isPlaying = false;
+  Cancion? cancionActual;
 
   @override
   void initState() {
     super.initState();
+
     if (widget.cancion != null) {
-      _playPreview();
+      PlayerMemory.posicion = 0;
+    }
+
+    cancionActual = widget.cancion ?? PlayerMemory.ultimaCancion;
+
+    if (cancionActual != null) {
+      _playPreview(cancionActual!, startAt: PlayerMemory.posicion);
+      _currentValue = PlayerMemory.posicion;
+      _isPlaying = PlayerMemory.estabaReproduciendo;
+
       _player.onPositionChanged.listen((Duration position) {
         setState(() {
           _currentValue = position.inSeconds.toDouble().clamp(0, 30);
         });
       });
+
       _player.onPlayerComplete.listen((event) {
         setState(() {
           _isPlaying = false;
@@ -40,10 +53,11 @@ class _PlayerScreenState extends State<PlayerScreen> {
     }
   }
 
-  void _playPreview() async {
-    final previewUrl = widget.cancion?.preview;
+  void _playPreview(Cancion cancion, {double startAt = 0}) async {
+    final previewUrl = cancion.preview;
     if (previewUrl != null && previewUrl.isNotEmpty) {
       await _player.play(UrlSource(previewUrl));
+      await _player.seek(Duration(seconds: startAt.toInt()));
       setState(() => _isPlaying = true);
     }
   }
@@ -55,6 +69,9 @@ class _PlayerScreenState extends State<PlayerScreen> {
 
   @override
   void dispose() {
+    if (cancionActual != null) {
+      PlayerMemory.guardar(cancionActual!, _currentValue, _isPlaying);
+    }
     _player.dispose();
     super.dispose();
   }
@@ -76,9 +93,9 @@ class _PlayerScreenState extends State<PlayerScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final c = widget.cancion;
-
+    final c = cancionActual;
     final hayCancion = c != null;
+
     final screenWidth = MediaQuery.of(context).size.width;
 
     return Scaffold(
@@ -308,7 +325,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
                         color: const Color(0xFF2E4E45),
                         onPressed: hayCancion
                             ? () {
-                                _isPlaying ? _pausePreview() : _playPreview();
+                                _isPlaying ? _pausePreview() : _playPreview(c);
                               }
                             : null,
                       ),

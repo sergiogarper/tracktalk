@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:tracktalk/shared/memory/chat_memory.dart';
+import 'package:tracktalk/shared/memory/player_memory.dart';
 import 'package:tracktalk/shared/widgets/custom_bottom_navbar.dart';
 
 import 'package:tracktalk/shared/models/usuario_global.dart';
@@ -123,6 +124,7 @@ class HomeScreen extends StatelessWidget {
                                       onTap: () {
                                         ChatMemory.clearMessages();
                                         UsuarioGlobal.reset();
+                                        PlayerMemory.limpiar();
                                         Navigator.of(context).pop();
                                         context.go('/login');
                                       },
