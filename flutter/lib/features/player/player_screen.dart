@@ -34,6 +34,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
     super.initState();
 
     if (widget.cancion != null) {
+      PlayerMemory.guardar(widget.cancion!, 0, true);
       PlayerMemory.posicion = 0;
     }
 
