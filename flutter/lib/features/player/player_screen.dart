@@ -306,8 +306,13 @@ class _PlayerScreenState extends State<PlayerScreen> {
                       ),
                       const SizedBox(width: 24),
                       IconButton(
-                        icon: const FaIcon(FontAwesomeIcons.spotify,
-                            size: 28, color: Color(0xFF2E4E45)),
+                        icon: FaIcon(
+                          FontAwesomeIcons.spotify,
+                          size: 28,
+                          color: hayCancion
+                              ? const Color(0xFF2E4E45)
+                              : Colors.grey,
+                        ),
                         onPressed: hayCancion && c.url != null
                             ? () async {
                                 ScaffoldMessenger.of(context).showSnackBar(
