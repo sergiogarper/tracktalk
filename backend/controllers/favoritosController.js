@@ -64,7 +64,13 @@ const getFavoritos = (req, res) => {
   }
 
   const query = `
-    SELECT C.*
+    SELECT 
+      C.id,
+      C.nombre,
+      C.artista,
+      C.url,
+      C.imagen_url AS imagen,
+      C.preview_url AS preview
     FROM Favorito F
     JOIN Cancion C ON F.cancion_id = C.id
     WHERE F.usuario_id = ?

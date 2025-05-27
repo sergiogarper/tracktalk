@@ -1,64 +1,127 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:tracktalk/shared/models/cancion_model.dart';
+import 'package:tracktalk/shared/models/usuario_global.dart';
+import 'package:tracktalk/shared/services/favorito_service.dart';
+import 'package:tracktalk/shared/widgets/custom_bottom_navbar.dart';
 import 'package:tracktalk/shared/memory/chat_memory.dart';
 import 'package:tracktalk/shared/memory/player_memory.dart';
-import 'package:tracktalk/shared/widgets/custom_bottom_navbar.dart';
 
-import 'package:tracktalk/shared/models/usuario_global.dart';
-
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    // SIMULACIÓN DE FAVORITOS DEL USUARIO hasta aplicar backend
-    final List<Map<String, String>> favorites = [
-      {
-        'image': 'assets/images/song-covers/song1.png',
-        'title': 'Cinnamon Curls',
-        'artist': 'Tom Misch',
-      },
-      {
-        'image': 'assets/images/song-covers/song2.png',
-        'title': '7 Days',
-        'artist': 'Craig David',
-      },
-      {
-        'image': 'assets/images/song-covers/song3.png',
-        'title': 'Messy in Heaven',
-        'artist': 'Venbee & Goddard',
-      },
-      {
-        'image': 'assets/images/song-covers/song4.png',
-        'title': 'Trash - Demo',
-        'artist': 'Artemas',
-      },
-      {
-        'image': 'assets/images/song-covers/song5.jpeg',
-        'title': 'Loving is easy',
-        'artist': 'Rex Orange County, Benny Sings',
-      },
-      {
-        'image': 'assets/images/song-covers/song6.jpeg',
-        'title': 'Hey girl',
-        'artist': 'boy pablo',
-      },
-    ];
+  State<HomeScreen> createState() => _HomeScreenState();
+}
 
+class _HomeScreenState extends State<HomeScreen> {
+  List<Cancion> favoritos = [];
+  bool cargando = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _cargarFavoritos();
+  }
+
+  Future<void> _cargarFavoritos() async {
+    try {
+      if (UsuarioGlobal.id != null) {
+        final canciones =
+            await FavoritoService.obtenerFavoritos(UsuarioGlobal.id!);
+        setState(() {
+          favoritos = canciones;
+          cargando = false;
+        });
+      }
+    } catch (_) {
+      setState(() => cargando = false);
+    }
+  }
+
+  String _tituloSinArtista(String nombre) {
+    return nombre.split(' - ').first.trim();
+  }
+
+  Widget buildFavoriteCard(Cancion cancion, BuildContext context) {
+    return GestureDetector(
+      onTap: () => context.push('/player', extra: cancion),
+      child: Container(
+        margin: const EdgeInsets.symmetric(vertical: 6),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: const Color.fromRGBO(246, 248, 243, 1),
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: const Color.fromRGBO(0, 0, 0, 0.05),
+              blurRadius: 6,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: Image.network(
+                cancion.imagen!,
+                width: 60,
+                height: 60,
+                fit: BoxFit.cover,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    _tituloSinArtista(cancion.nombre),
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: -0.5,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    cancion.artista,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: Colors.black54,
+                      letterSpacing: -0.5,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            IconButton(
+              icon: const Icon(Icons.play_circle_fill),
+              iconSize: 40,
+              color: const Color(0xFF2E4E45),
+              onPressed: () => context.push('/player', extra: cancion),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final String userName = UsuarioGlobal.nombre ?? 'usuario';
     final String avatarUrl =
         'https://robohash.org/$userName/?set=set5&size=200x200';
 
     return Scaffold(
+      bottomNavigationBar: const CustomBottomNavBar(currentIndex: 2),
       body: Stack(
         children: [
-          // Fondo de pantalla
           Positioned.fill(
             child: Stack(
               children: [
-                Container(
-                  color: const Color(0xFFFAF8F6),
-                ),
+                Container(color: const Color(0xFFFAF8F6)),
                 Positioned.fill(
                   child: Opacity(
                     opacity: 0.6,
@@ -84,12 +147,8 @@ class HomeScreen extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Row(
-                          crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
-                            Image.asset(
-                              'assets/images/icon.png',
-                              height: 100,
-                            ),
+                            Image.asset('assets/images/icon.png', height: 100),
                             const Text(
                               'Mi perfil',
                               style: TextStyle(
@@ -107,16 +166,9 @@ class HomeScreen extends StatelessWidget {
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(20),
                                 ),
-                                title: const Text(
-                                  'Opciones',
-                                  style: TextStyle(
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
+                                title: const Text('Opciones'),
                                 content: Column(
                                   mainAxisSize: MainAxisSize.min,
-                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     ListTile(
                                       leading: const Icon(Icons.logout),
@@ -134,11 +186,8 @@ class HomeScreen extends StatelessWidget {
                               ),
                             );
                           },
-                          icon: const Icon(
-                            Icons.settings,
-                            color: Color(0xFF2E4E45),
-                            size: 36,
-                          ),
+                          icon: const Icon(Icons.settings,
+                              size: 36, color: Color(0xFF2E4E45)),
                         ),
                       ],
                     ),
@@ -153,7 +202,7 @@ class HomeScreen extends StatelessWidget {
                             shape: BoxShape.circle,
                             boxShadow: [
                               BoxShadow(
-                                color: Color.fromRGBO(0, 0, 0, 0.25),
+                                color: const Color.fromRGBO(0, 0, 0, 0.25),
                                 blurRadius: 12,
                                 offset: const Offset(0, 4),
                               ),
@@ -191,8 +240,11 @@ class HomeScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 10),
-                  if (favorites.isEmpty)
-                    Expanded(
+                  if (cargando)
+                    const Expanded(
+                        child: Center(child: CircularProgressIndicator()))
+                  else if (favoritos.isEmpty)
+                    const Expanded(
                       child: Center(
                         child: Text(
                           '¡Aún no tienes canciones favoritas! 😔 \nAgrega algunas para verlas aquí.',
@@ -203,86 +255,11 @@ class HomeScreen extends StatelessWidget {
                     )
                   else
                     Expanded(
-                      child: Column(
-                        children: [
-                          Expanded(
-                            child: ListView.builder(
-                              itemCount: favorites.length,
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 25),
-                              itemBuilder: (context, index) {
-                                final song = favorites[index];
-                                return Container(
-                                  margin:
-                                      const EdgeInsets.symmetric(vertical: 4),
-                                  padding: const EdgeInsets.all(12),
-                                  decoration: BoxDecoration(
-                                    color:
-                                        const Color.fromRGBO(246, 248, 243, 1),
-                                    borderRadius: BorderRadius.circular(16),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color:
-                                            const Color.fromRGBO(0, 0, 0, 0.05),
-                                        blurRadius: 6,
-                                        offset: const Offset(0, 3),
-                                      ),
-                                    ],
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      ClipRRect(
-                                        borderRadius: BorderRadius.circular(12),
-                                        child: Image.asset(
-                                          song['image']!,
-                                          width: 60,
-                                          height: 60,
-                                          fit: BoxFit.cover,
-                                        ),
-                                      ),
-                                      const SizedBox(width: 16),
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              song['title']!,
-                                              style: const TextStyle(
-                                                fontSize: 18,
-                                                fontWeight: FontWeight.w700,
-                                                letterSpacing: -0.5,
-                                              ),
-                                            ),
-                                            const SizedBox(height: 6),
-                                            Text(
-                                              song['artist']!,
-                                              style: const TextStyle(
-                                                fontSize: 16,
-                                                color: Colors.black54,
-                                                letterSpacing: -0.5,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                      IconButton(
-                                        icon:
-                                            const Icon(Icons.play_circle_fill),
-                                        iconSize: 40,
-                                        color: const Color(0xFF2E4E45),
-                                        onPressed: () {
-                                          context.go('/player');
-                                        },
-                                      ),
-                                    ],
-                                  ),
-                                );
-                              },
-                            ),
-                          ),
-                          const SizedBox(height: 20),
-                        ],
+                      child: ListView.builder(
+                        itemCount: favoritos.length,
+                        padding: const EdgeInsets.symmetric(horizontal: 25),
+                        itemBuilder: (context, index) =>
+                            buildFavoriteCard(favoritos[index], context),
                       ),
                     ),
                 ],
@@ -291,7 +268,6 @@ class HomeScreen extends StatelessWidget {
           ),
         ],
       ),
-      bottomNavigationBar: const CustomBottomNavBar(currentIndex: 2),
     );
   }
 }

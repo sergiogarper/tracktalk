@@ -34,7 +34,6 @@ flutter:
 
   assets:
     - assets/images/
-    - assets/images/song-covers/
 
   fonts:
     - family: Inter

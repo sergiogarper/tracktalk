@@ -4,7 +4,6 @@ import '../../features/auth/login_screen.dart';
 import '../../features/home/home_screen.dart';
 import '../../features/chat/chat_screen.dart';
 import '../../features/player/player_screen.dart';
-import '../../features/history/history_screen.dart';
 
 final GoRouter appRouter = GoRouter(
   initialLocation: '/login',
@@ -27,10 +26,6 @@ final GoRouter appRouter = GoRouter(
         final cancion = state.extra is Cancion ? state.extra as Cancion : null;
         return PlayerScreen(cancion: cancion);
       },
-    ),
-    GoRoute(
-      path: '/history',
-      builder: (context, state) => const HistoryScreen(),
     ),
   ],
 );

@@ -148,16 +148,6 @@ class _PlayerScreenState extends State<PlayerScreen> {
                       maxHeight: screenWidth * 0.8,
                     ),
                     decoration: BoxDecoration(
-                      image: hayCancion && c.imagen != null
-                          ? DecorationImage(
-                              image: NetworkImage(c.imagen!),
-                              fit: BoxFit.cover,
-                            )
-                          : const DecorationImage(
-                              image: AssetImage(
-                                  'assets/images/song-covers/placeholder.png'),
-                              fit: BoxFit.cover,
-                            ),
                       borderRadius: BorderRadius.circular(60),
                       boxShadow: [
                         BoxShadow(
@@ -166,6 +156,21 @@ class _PlayerScreenState extends State<PlayerScreen> {
                           offset: const Offset(0, 4),
                         ),
                       ],
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(60),
+                      child: hayCancion && c.imagen != null
+                          ? Image.network(
+                              c.imagen!,
+                              fit: BoxFit.cover,
+                            )
+                          : Opacity(
+                              opacity: 0,
+                              child: Image.asset(
+                                'assets/images/placeholder.png',
+                                fit: BoxFit.cover,
+                              ),
+                            ),
                     ),
                   ),
                   const SizedBox(height: 24),
