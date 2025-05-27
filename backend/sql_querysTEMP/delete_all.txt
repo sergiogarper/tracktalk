@@ -1,6 +1,0 @@
-DELETE FROM Recomendacion;
-DELETE FROM Mensaje;
-DELETE FROM Favorito;
-DELETE FROM Chat;
-DELETE FROM Cancion;
-DELETE FROM sqlite_sequence;

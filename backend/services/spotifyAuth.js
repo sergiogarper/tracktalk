@@ -7,7 +7,6 @@ let tokenTimestamp = null;
 async function obtenerTokenSpotify() {
   const ahora = Date.now();
 
-  // Si ya tenemos un token reciente, lo reutilizamos (dura 1h)
   if (cachedToken && ahora - tokenTimestamp < 3600 * 1000) {
     return cachedToken;
   }
