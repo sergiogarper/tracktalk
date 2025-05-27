@@ -1,3 +1,4 @@
+// ignore_for_file: use_build_context_synchronously
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -38,6 +39,13 @@ class _RegisterModalState extends State<RegisterModal> {
 
       if (response.statusCode == 201) {
         if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('✅ Cuenta registrada con éxito'),
+            backgroundColor: Color(0xFF2E4E45),
+            duration: Duration(seconds: 2),
+          ),
+        );
         Navigator.of(context).pop();
       } else {
         final body = jsonDecode(response.body);
