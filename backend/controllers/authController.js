@@ -1,4 +1,5 @@
 const db = require('../db/sqlite');
+const bcrypt = require('bcryptjs');
 
 // ----------- FUNCION DE REGISTRO ----------
 const register = (req, res) => {
@@ -8,9 +9,9 @@ const register = (req, res) => {
     return res.status(400).json({ error: 'Faltan campos obligatorios' });
   }
 
-  // Verificación 
+  // Verificar si el email ya existe
   const checkQuery = `SELECT * FROM Usuario WHERE email = ?`;
-  db.get(checkQuery, [email], (err, row) => {
+  db.get(checkQuery, [email], async (err, row) => {
     if (err) {
       console.error('Error comprobando email:', err);
       return res.status(500).json({ error: 'Error en el servidor' });
@@ -20,19 +21,30 @@ const register = (req, res) => {
       return res.status(409).json({ error: 'El correo ya está registrado' });
     }
 
-    const insertQuery = `
-      INSERT INTO Usuario (nombre, email, pass, fecha_registro)
-      VALUES (?, ?, ?, datetime('now'))
-    `;
+    try {
+      // Hashear la contraseña antes de guardar
+      const hashedPass = await bcrypt.hash(pass, 10);
 
-    db.run(insertQuery, [nombre, email, pass], function (err) {
-      if (err) {
-        console.error('Error al registrar usuario:', err);
-        return res.status(500).json({ error: 'Error al registrar' });
-      }
+      const insertQuery = `
+        INSERT INTO Usuario (nombre, email, pass, fecha_registro)
+        VALUES (?, ?, ?, datetime('now'))
+      `;
 
-      return res.status(201).json({ message: 'Usuario registrado correctamente', userId: this.lastID });
-    });
+      db.run(insertQuery, [nombre, email, hashedPass], function (err) {
+        if (err) {
+          console.error('Error al registrar usuario:', err);
+          return res.status(500).json({ error: 'Error al registrar' });
+        }
+
+        return res.status(201).json({
+          message: 'Usuario registrado correctamente',
+          userId: this.lastID,
+        });
+      });
+    } catch (err) {
+      console.error('Error al hashear contraseña:', err);
+      return res.status(500).json({ error: 'Error interno al registrar' });
+    }
   });
 };
 
@@ -44,31 +56,35 @@ const login = (req, res) => {
     return res.status(400).json({ error: 'Faltan campos obligatorios' });
   }
 
-  const query = `SELECT * FROM Usuario WHERE email = ? AND pass = ?`;
+  const query = `SELECT * FROM Usuario WHERE email = ?`;
 
-  db.get(query, [email, pass], (err, row) => {
+  db.get(query, [email], async (err, user) => {
     if (err) {
       console.error('Error en login:', err);
       return res.status(500).json({ error: 'Error en el servidor' });
     }
 
-    if (!row) {
+    if (!user) {
+      return res.status(401).json({ error: 'Credenciales incorrectas' });
+    }
+
+    // Compara la contraseña con el hash
+    const match = await bcrypt.compare(pass, user.pass);
+
+    if (!match) {
       return res.status(401).json({ error: 'Credenciales incorrectas' });
     }
 
     return res.status(200).json({
       message: 'Login correcto',
       user: {
-        id: row.id,
-        nombre: row.nombre,
-        email: row.email,
-        fecha_registro: row.fecha_registro
+        id: user.id,
+        nombre: user.nombre,
+        email: user.email,
+        fecha_registro: user.fecha_registro
       }
     });
   });
 };
 
-
-// Exportar las funciones
 module.exports = { register, login };
-
