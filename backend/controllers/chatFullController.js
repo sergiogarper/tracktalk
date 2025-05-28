@@ -1,21 +1,19 @@
 const db = require("../db/sqlite");
 const { generarRecomendacion } = require("../services/recomendacionService");
+const { obtenerCancionesRecientes } = require("../services/spotifyService");
 
 async function procesarMensajeChat(req, res) {
   const { usuario_id, mensaje_usuario, chat_id } = req.body;
 
   if (!usuario_id || !mensaje_usuario) {
-    return res
-      .status(400)
-      .json({
-        error: "Faltan campos obligatorios: usuario_id o mensaje_usuario",
-      });
+    return res.status(400).json({
+      error: "Faltan campos obligatorios: usuario_id o mensaje_usuario",
+    });
   }
 
   try {
     const fecha = new Date().toISOString();
 
-    // 1. Usar chat_id si se pasa, si no, crear uno nuevo
     let chatId = chat_id;
 
     if (!chatId) {
@@ -31,7 +29,6 @@ async function procesarMensajeChat(req, res) {
       });
     }
 
-    // 2. Guardar el mensaje del usuario
     const mensajeUsuarioId = await new Promise((resolve, reject) => {
       db.run(
         'INSERT INTO Mensaje (chat_id, emisor, contenido, fecha_envio) VALUES (?, "usuario", ?, ?)',
@@ -43,12 +40,75 @@ async function procesarMensajeChat(req, res) {
       );
     });
 
-    // 3. Generar respuesta de la IA y recomendaciones
+    // Función para quitar tildes
+    function normalizarTexto(texto) {
+      return texto
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase();
+    }
+
+    const mensajeNormalizado = normalizarTexto(mensaje_usuario);
+
+    const match = mensajeNormalizado.match(
+      /(?:ultimas|recientes|lo mas reciente|lo nuevo|lo ultimo).+de\s+(.+)/i
+    );
+
+    if (match) {
+      const artista = match[1].trim();
+      const canciones = await obtenerCancionesRecientes(artista);
+
+      const mensajeIA = `Aquí tienes algunas canciones recientes de ${artista}:`;
+      const fecha = new Date().toISOString();
+
+      const mensajeIAId = await new Promise((resolve, reject) => {
+        db.run(
+          'INSERT INTO Mensaje (chat_id, emisor, contenido, fecha_envio) VALUES (?, "ia", ?, ?)',
+          [chatId, mensajeIA, fecha],
+          function (err) {
+            if (err) reject(err);
+            else resolve(this.lastID);
+          }
+        );
+      });
+
+      for (const cancion of canciones) {
+        await new Promise((resolve, reject) => {
+          db.run(
+            "INSERT OR IGNORE INTO Cancion (id, nombre, artista, url, imagen_url, preview_url) VALUES (?, ?, ?, ?, ?, ?)",
+            [
+              cancion.id,
+              cancion.nombre,
+              cancion.artista,
+              cancion.url,
+              cancion.imagen,
+              cancion.preview,
+            ],
+            (err) => (err ? reject(err) : resolve())
+          );
+        });
+
+        await new Promise((resolve, reject) => {
+          db.run(
+            "INSERT INTO Recomendacion (mensaje_id, cancion_id) VALUES (?, ?)",
+            [mensajeIAId, cancion.id],
+            (err) => (err ? reject(err) : resolve())
+          );
+        });
+      }
+
+      return res.json({
+        chat_id: chatId,
+        mensaje_usuario,
+        mensaje_ia: mensajeIA,
+        canciones,
+      });
+    }
+
     const { mensajeIA, canciones } = await generarRecomendacion(
       mensaje_usuario
     );
 
-    // 4. Guardar mensaje IA
     const mensajeIAId = await new Promise((resolve, reject) => {
       db.run(
         'INSERT INTO Mensaje (chat_id, emisor, contenido, fecha_envio) VALUES (?, "ia", ?, ?)',
@@ -60,7 +120,6 @@ async function procesarMensajeChat(req, res) {
       );
     });
 
-    // 5. Insertar canciones y recomendaciones
     for (const cancion of canciones) {
       await new Promise((resolve, reject) => {
         db.run(
@@ -86,7 +145,6 @@ async function procesarMensajeChat(req, res) {
       });
     }
 
-    // 6. Devolver resultado
     res.json({
       chat_id: chatId,
       mensaje_usuario,
