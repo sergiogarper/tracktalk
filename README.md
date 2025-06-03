@@ -89,7 +89,7 @@ El proyecto incluye un archivo llamado `runAll_Chrome.bat` que permite iniciar t
 
 1. Una vez la app se esté ejecutando, registrar un nuevo usuario o utilizar el usuario de prueba:
 ```bash
-sergio@example.com
+example@example.com
 1234
 ```
 2. Si funciona todo correctamente, probar a chatear con la IA.

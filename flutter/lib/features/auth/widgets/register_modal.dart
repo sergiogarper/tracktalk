@@ -50,12 +50,12 @@ class _RegisterModalState extends State<RegisterModal> {
       } else {
         final body = jsonDecode(response.body);
         setState(() {
-          mensaje = '❌ ${body['error'] ?? 'Error desconocido'}';
+          mensaje = ' ${body['error'] ?? 'Error desconocido'}';
         });
       }
     } catch (_) {
       setState(() {
-        mensaje = '❌ Error de conexión con el servidor';
+        mensaje = ' Error de conexión con el servidor';
       });
     } finally {
       setState(() {

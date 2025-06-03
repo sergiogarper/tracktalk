@@ -48,12 +48,12 @@ class _LoginModalState extends State<LoginModal> {
       } else {
         final body = jsonDecode(response.body);
         setState(() {
-          mensaje = '❌ ${body['error'] ?? 'Credenciales inválidas'}';
+          mensaje = ' ${body['error'] ?? 'Credenciales inválidas'}';
         });
       }
     } catch (_) {
       setState(() {
-        mensaje = '❌ Error de conexión con el servidor';
+        mensaje = ' Error de conexión con el servidor';
       });
     } finally {
       setState(() {

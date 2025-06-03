@@ -77,7 +77,7 @@ class _ChatScreenState extends State<ChatScreen> {
     } catch (e) {
       setState(() {
         ChatMemory.addMessage({
-          'text': '⚠️ Hubo un error al procesar tu mensaje.',
+          'text': 'Hubo un error al procesar tu mensaje.',
           'isUser': false,
         });
         esperandoRespuesta = false;

@@ -152,7 +152,7 @@ async function procesarMensajeChat(req, res) {
       canciones,
     });
   } catch (err) {
-    console.error("❌ Error al procesar el mensaje completo:", err);
+    console.error("Error al procesar el mensaje completo:", err);
     res
       .status(500)
       .json({ error: "Error interno del servidor al procesar el mensaje" });
@@ -167,7 +167,7 @@ function obtenerHistorialChats(req, res) {
     [usuarioId],
     (err, rows) => {
       if (err) {
-        console.error("❌ Error al obtener historial:", err);
+        console.error("Error al obtener historial:", err);
         return res.status(500).json({ error: "Error al obtener el historial" });
       }
 
@@ -191,7 +191,7 @@ function obtenerChatCompleto(req, res) {
     [chat_id, usuario_id],
     async (err, rows) => {
       if (err) {
-        console.error("❌ Error al obtener el chat completo:", err);
+        console.error("Error al obtener el chat completo:", err);
         return res.status(500).json({ error: "Error al obtener el chat" });
       }
 
